@@ -4,6 +4,7 @@ import {z} from 'zod';
 import {sql} from "@vercel/postgres";
 import {revalidatePath} from "next/cache";
 import {redirect} from "next/navigation";
+import {signIn} from "@/auth";
 
 const InvoiceSchema = z.object({
     id: z.string(),
@@ -102,7 +103,6 @@ export async function updateInvoice(id: string, prevState: State, formData: Form
 }
 
 export async function deleteInvoice(id: string) {
-    throw new Error('Failed to delete invoice.');
     try {
         await sql` DELETE
                    FROM invoices
@@ -113,4 +113,17 @@ export async function deleteInvoice(id: string) {
         console.error('Database Error: Failed to Delete Invoice.', ex);
         return {message: 'Database Error: Failed to Delete Invoice.'};
     }
+}
+
+export async function authenticate(prevState: string | undefined,
+                                   formData: FormData) {
+    try {
+        await signIn('credentials', Object.fromEntries(formData))
+    } catch (ex) {
+        if ((ex as Error).message.includes('CredentialsSignin')) {
+            return 'CredentialSignin';
+        }
+        throw ex;
+    }
+
 }
